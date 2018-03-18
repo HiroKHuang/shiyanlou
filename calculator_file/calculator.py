@@ -37,7 +37,7 @@ class UserData(object):
         user_dict = {}
         with open(ar.args[ar.indexd]) as file:
             for line in file.readlines():
-                a = line.strip('\n').split(',')
+                a = line.strip().split(',')
                 user_dict[a[0].strip()] = int(a[1].strip())
             return user_dict
 
