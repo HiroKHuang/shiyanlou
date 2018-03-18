@@ -18,7 +18,7 @@ class Args(object):
 
     def _check_file(self):
     #判断各文件是否存在
-        return os.path.exists(self.args[self.indexc]) and os.path.exists(self.args[self.indexd]) and os.path.exists(self.args[self.indexo])
+        return os.path.exists(self.args[self.indexc]) and os.path.exists(self.args[self.indexd])
     
 class Config(object):
     #定义配置文件类,并将配置文件内容赋值给其属性.config
@@ -96,7 +96,7 @@ class IncomeTaxCalculator(object):
             return tax_base * 0.45 - 13505
 
     def _export(self, ar, default='csv'):
-    输出信息到gongzi.csv
+    #输出信息到gongzi.csv
         with open(ar.args[ar.indexo], 'w') as file:
             writer = csv.writer(file)
             writer.writerows(self.result)
