@@ -38,9 +38,12 @@ class Config(object):
             return config_dict
 
 class User(object):
-    def __init__(self):
+    def __init__(self, cfg):
     #定义好要用的基本属性
         self.rate_shebao = 0.00
+        for value in cfg.config.values():
+            if value < 1:
+                self.rate_shebao += value
         self.shebao = 0.00
         self.tax = 0.00
         self.taxed_income = 0.00
@@ -58,9 +61,6 @@ class User(object):
     def _create_newdata(self, cfg):
     #生成新的工资信息
         user_data = queue1.get()
-        for value in cfg.config.values():
-            if value < 1:
-                self.rate_shebao += value
         for key, value in user_data.items():
             if value < cfg.config['JiShuL']:
                 shebaobase = cfg.config['JiShuL']
@@ -106,7 +106,7 @@ if __name__=='__main__':
     if ar._check_para():    #检查参数数量是否完整
         if ar._check_file():    #检查文件是否存在
             cfg = Config(ar)
-            ud= User()
+            ud= User(cfg)
             Process(target=ud._read_users_data, args=(ar,)).start()
             Process(target=ud._create_newdata, args=(cfg,)).start()
             Process(target=export, args=(ar,)).start()

@@ -3,7 +3,7 @@
 import sys
 import csv
 import os
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool
 
 queue1 = Queue()
 queue2 = Queue()
@@ -38,9 +38,12 @@ class Config(object):
             return config_dict
 
 class User(object):
-    def __init__(self):
+    def __init__(self, cfg):
     #定义好要用的基本属性
         self.rate_shebao = 0.00
+        for value in cfg.config.values():
+            if value < 1:
+                self.rate_shebao += value
         self.shebao = 0.00
         self.tax = 0.00
         self.taxed_income = 0.00
@@ -55,24 +58,20 @@ class User(object):
                 user_dict[a[0].strip()] = int(a[1].strip())
             queue1.put(user_dict)
 
-    def _create_newdata(self, cfg):
-    #生成新的工资信息
+    def _create_newdata(self, cfg, key, value):
+    #生成新员工数据信息
         user_data = queue1.get()
-        for value in cfg.config.values():
-            if value < 1:
-                self.rate_shebao += value
-        for key, value in user_data.items():
-            if value < cfg.config['JiShuL']:
-                shebaobase = cfg.config['JiShuL']
-            elif value > cfg.config['JiShuH']:
-                shebaobase = cfg.config['JiShuH']
-            else:
-                shebaobase = value
-            self.shebao = shebaobase * self.rate_shebao
-            self.tax = self._calculate_tax(value - self.shebao - 3500)
-            self.taxed_income = value - self.shebao - self.tax
-            self.result.append([key, format(value,'.2f'), format(self.shebao,'.2f'), format(self.tax,'.2f'), format(self.taxed_income,'.2f')])
-        queue2.put(self.result)
+        if value < cfg.config['JiShuL']:
+            shebaobase = cfg.config['JiShuL']
+        elif value > cfg.config['JiShuH']:
+            shebaobase = cfg.config['JiShuH']
+        else:
+            shebaobase = value
+        self.shebao = shebaobase * self.rate_shebao
+        self.tax = self._calculate_tax(value - self.shebao - 3500)
+        self.taxed_income = value - self.shebao - self.tax
+        self.result.append([key, format(value,'.2f'), format(self.shebao,'.2f'), format(self.tax,'.2f'), format(self.taxed_income,'.2f')])
+        print(self.result)
         
     def _calculate_tax(self,tax_base):
     #计算税金
@@ -106,9 +105,16 @@ if __name__=='__main__':
     if ar._check_para():    #检查参数数量是否完整
         if ar._check_file():    #检查文件是否存在
             cfg = Config(ar)
-            ud= User()
+            ud= User(cfg)
             Process(target=ud._read_users_data, args=(ar,)).start()
-            Process(target=ud._create_newdata, args=(cfg,)).start()
+            pool = Pool(processes=5)
+            user_data = queue1.get()
+            print(user_data)
+            for key, value in user_data.items():
+                pool.apply(ud._create_newdata,(cfg,key,value))
+                pool.close()
+                pool.join()
+            print(ud.result)
             Process(target=export, args=(ar,)).start()
         else:        
             print('file is not existed')
