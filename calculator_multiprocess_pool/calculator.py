@@ -3,7 +3,7 @@
 import sys
 import csv
 import os
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pool
 
 queue1 = Queue()
 queue2 = Queue()
@@ -58,23 +58,19 @@ class User(object):
                 user_dict[a[0].strip()] = int(a[1].strip())
             queue1.put(user_dict)
 
-    def _create_newdata(self, cfg):
+    def _create_newdata(self, cfg, key, value):
     #生成新的工资信息
-        user_data = queue1.get()
-        for key, value in user_data.items():
-            if value < cfg.config['JiShuL']:
-                shebaobase = cfg.config['JiShuL']
-            elif value > cfg.config['JiShuH']:
-                shebaobase = cfg.config['JiShuH']
-            else:
-                shebaobase = value
-            self.shebao = shebaobase * self.rate_shebao
-            self.tax = self._calculate_tax(value - self.shebao - 3500)
-            self.taxed_income = value - self.shebao - self.tax
-            self.result.append([key, format(value,'.2f'), format(self.shebao,'.2f'), format(self.tax,'.2f'), format(self.taxed_income,'.2f')])
+        if value < cfg.config['JiShuL']:
+            shebaobase = cfg.config['JiShuL']
+        elif value > cfg.config['JiShuH']:
+            shebaobase = cfg.config['JiShuH']
+        else:
+            shebaobase = value
+        self.shebao = shebaobase * self.rate_shebao
+        self.tax = self._calculate_tax(value - self.shebao - 3500)
+        self.taxed_income = value - self.shebao - self.tax
+        self.result.append([key, format(value,'.2f'), format(self.shebao,'.2f'), format(self.tax,'.2f'), format(self.taxed_income,'.2f')])
         print(self.result)
-        queue2.put(self.result)
-        
     def _calculate_tax(self,tax_base):
     #计算税金
         if tax_base < 0:
@@ -109,7 +105,13 @@ if __name__=='__main__':
             cfg = Config(ar)
             ud= User(cfg)
             Process(target=ud._read_users_data, args=(ar,)).start()
-            Process(target=ud._create_newdata, args=(cfg,)).start()
+            pool = Pool(processes=3)
+            user_data = queue1.get()
+            for key, value in user_data.items():
+                pool.apply(ud._create_newdata,(cfg,key,value))
+            pool.close()
+            pool.join()
+            queue2.put(ud.result)
             Process(target=export, args=(ar,)).start()
         else:        
             print('file is not existed')
