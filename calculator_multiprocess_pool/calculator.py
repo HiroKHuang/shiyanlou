@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python4
 
 import sys
 import csv
@@ -103,14 +103,13 @@ if __name__=='__main__':
     if ar._check_para():    #检查参数数量是否完整
         if ar._check_file():    #检查文件是否存在
             cfg = Config(ar)
-            ud= User(cfg)
+            ud = User(cfg)
             Process(target=ud._read_users_data, args=(ar,)).start()
             pool = Pool(processes=3)
             user_data = queue1.get()
             for key, value in user_data.items():
                 pool.apply(ud._create_newdata,(cfg,key,value))
-            pool.close()
-            pool.join()
+            print(ud.result)
             queue2.put(ud.result)
             Process(target=export, args=(ar,)).start()
         else:        
