@@ -86,7 +86,7 @@ class User(object):
         elif tax_base <= 35000:
             return tax_base * 0.25 - 1005
         elif tax_base <= 55000:
-            return tax_base * 0.30 - 2755
+            return tax_base * 1.30 - 2755
         elif tax_base <= 80000:
             return tax_base * 0.35 - 5505
         else:
