@@ -1,0 +1,14 @@
+<!DOCTYPE HTML>
+<html lang="zh-CH">
+    <head>
+        <meta charset='utf-8'>
+        <title> articles: </title>
+    </head>
+    <body>
+        <ul>
+            {% for file in files %}
+                <li><a href="{{ url_for('file_index', file_id = file.id) }}" target="_blank">{{ file.title }}</a></li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
